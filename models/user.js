@@ -27,9 +27,11 @@ var User = new Schema({
         default: ''
     },
     email: {
-        type: mongoose.SchemaTypes.Email,
-        required: true
-    }
+        type: mongoose.SchemaTypes.Email
+    },
+    favoritas: [{
+        type: String
+    }]
 },
 {
     timestamps: true

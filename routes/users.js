@@ -8,22 +8,20 @@ var User = require('../models/user');
 var passport = require('passport');
 var authenticate = require('../authenticate');
 
-const Users = require('../models/user');
-
 
 /* GET users listing. */
 router.options('*', cors.corsWithOptions, (req, res) => { res.sendStatus(200); });
 
-// router.get('/', cors.corsWithOptions, authenticate.verifyUser, authenticate.verifyAdmin, (req, res, next) => {
-//   //res.send('respond with a resource');
-//   Users.find({})
-//         .then((users) => {
-//             res.statusCode = 200;
-//             res.setHeader('Content-Type', 'application/json');
-//             res.json(users);
-//         }, (err) => next(err))
-//         .catch((err) => next(err));
-// });
+router.get('/', cors.corsWithOptions, authenticate.verifyUser, /*authenticate.verifyAdmin,*/ (req, res, next) => {
+  //res.send('respond with a resource');
+  User.find({})
+        .then((users) => {
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.json(users);
+        }, (err) => next(err))
+        .catch((err) => next(err));
+});
 
 router.post('/login', cors.corsWithOptions, (req, res, next) => {
   
@@ -53,8 +51,9 @@ router.post('/login', cors.corsWithOptions, (req, res, next) => {
 });
 
 router.post('/signup', cors.corsWithOptions, function(req, res, next) {
-  User.register(new User({username: req.body.username, email: req.body.email}), req.body.password, (err, user) => {
+  User.register(new User({username: req.body.username}), req.body.password, (err, user) => {
     if (err) {
+      console.log(err)
       res.statusCode = 500;
       res.setHeader('Content-Type', 'application/json');
       res.json({err: err});
@@ -74,7 +73,7 @@ router.post('/signup', cors.corsWithOptions, function(req, res, next) {
         passport.authenticate('local')(req, res, () => {
           res.statusCode = 200;
           res.setHeader('Content-Type', 'application/json');
-          res.json({success: true, status: 'Registration Successful'});
+          res.json({success: true, status: 'Registration Successful', username: req.user.username});
         });
       });
     }
@@ -101,8 +100,29 @@ router.get('/checkJWTToken', cors.corsWithOptions, (req, res) =>{
 });
 
 
-router.get('/profile', cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
-  Users.findOne({_id: req.user._id})
+// router.get('/profile', cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+//   Users.findOne({_id: req.user._id})
+//         .then((user) => {
+//             res.statusCode = 200;
+//             res.setHeader('Content-Type', 'application/json');
+//             res.json(user);
+//         }, (err) => next(err))
+//         .catch((err) => next(err));
+// });
+
+
+// router.put('/profile', cors.corsWithOptions, authenticate.verifyUser, (req,res,next) => {
+//   Users.findByIdAndUpdate(req.user._id, {$set: req.body}, {new: true})
+//         .then((user) => {
+//             res.statusCode = 200;
+//             res.setHeader('Content-Type', 'application/json');
+//             res.json(user);
+//         }, (err) => next(err))
+//         .catch((err) => next(err));  
+// });
+
+router.get('/favoritas', cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+  User.findOne({_id: req.user._id}, {favoritas:1})
         .then((user) => {
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json');
@@ -111,16 +131,30 @@ router.get('/profile', cors.corsWithOptions, authenticate.verifyUser, (req, res,
         .catch((err) => next(err));
 });
 
-
-router.put('/profile', cors.corsWithOptions, authenticate.verifyUser, (req,res,next) => {
-  Users.findByIdAndUpdate(req.user._id, {$set: req.body}, {new: true})
+router.put('/favoritas', cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+  User.findByIdAndUpdate(req.user._id, {
+    $push: {'favoritas': req.body.favorita}
+}, { new: true })
         .then((user) => {
             res.statusCode = 200;
             res.setHeader('Content-Type', 'application/json');
             res.json(user);
         }, (err) => next(err))
-        .catch((err) => next(err));  
+        .catch((err) => next(err));
 });
+
+router.post('/favoritas', cors.corsWithOptions, authenticate.verifyUser, (req, res, next) => {
+  User.findByIdAndUpdate(req.user._id, {
+    $pull: {'favoritas': req.body.favorita}
+}, { new: true })
+        .then((user) => {
+            res.statusCode = 200;
+            res.setHeader('Content-Type', 'application/json');
+            res.json(user);
+        }, (err) => next(err))
+        .catch((err) => next(err));
+});
+
 
 
 
